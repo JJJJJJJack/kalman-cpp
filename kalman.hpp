@@ -32,6 +32,16 @@ public:
       const Eigen::MatrixXd& R,
       const Eigen::MatrixXd& P
   );
+  
+  KalmanFilter(
+      double dt,
+      const Eigen::MatrixXd& A,
+      const Eigen::MatrixXd& B,
+      const Eigen::MatrixXd& C,
+      const Eigen::MatrixXd& Q,
+      const Eigen::MatrixXd& R,
+      const Eigen::MatrixXd& P
+  );
 
   /**
   * Create a blank estimator.
@@ -53,12 +63,24 @@ public:
   * time step is assumed to remain constant.
   */
   void update(const Eigen::VectorXd& y);
+  
+  /**
+  * Update the estimated state based on measured values. The
+  * time step is assumed to remain constant.
+  */
+  void update(const Eigen::VectorXd& y, const Eigen::VectorXd u);
 
   /**
   * Update the estimated state based on measured values,
   * using the given time step and dynamics matrix.
   */
   void update(const Eigen::VectorXd& y, double dt, const Eigen::MatrixXd A);
+  
+  /**
+  * Update the estimated state based on measured values,
+  * using the given time step and dynamics matrix.
+  */
+  void update(const Eigen::VectorXd& y, double dt, const Eigen::MatrixXd A, const Eigen::VectorXd u);
 
   /**
   * Return the current state and time.
@@ -69,7 +91,7 @@ public:
 private:
 
   // Matrices for computation
-  Eigen::MatrixXd A, C, Q, R, P, K, P0;
+  Eigen::MatrixXd A, B, C, Q, R, P, K, P0;
 
   // System dimensions
   int m, n;
