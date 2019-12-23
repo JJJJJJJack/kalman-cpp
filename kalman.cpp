@@ -24,6 +24,21 @@ KalmanFilter::KalmanFilter(
   I.setIdentity();
 }
 
+KalmanFilter::KalmanFilter(
+    double dt,
+    const Eigen::MatrixXd& A,
+    const Eigen::MatrixXd& B,
+    const Eigen::MatrixXd& C,
+    const Eigen::MatrixXd& Q,
+    const Eigen::MatrixXd& R,
+    const Eigen::MatrixXd& P)
+  : A(A), B(B), C(C), Q(Q), R(R), P0(P),
+    m(C.rows()), n(A.rows()), dt(dt), initialized(false),
+    I(n, n), x_hat(n), x_hat_new(n)
+{
+  I.setIdentity();
+}
+
 KalmanFilter::KalmanFilter() {}
 
 void KalmanFilter::init(double t0, const Eigen::VectorXd& x0) {
@@ -42,6 +57,7 @@ void KalmanFilter::init() {
   initialized = true;
 }
 
+// Updating without input
 void KalmanFilter::update(const Eigen::VectorXd& y) {
 
   if(!initialized)
@@ -57,9 +73,34 @@ void KalmanFilter::update(const Eigen::VectorXd& y) {
   t += dt;
 }
 
+// Updating with input
+void KalmanFilter::update(const Eigen::VectorXd& y, const Eigen::VectorXd u) {
+
+  if(!initialized)
+    throw std::runtime_error("Filter is not initialized!");
+
+  x_hat_new = A * x_hat + B * u;
+  P = A*P*A.transpose() + Q;
+  K = P*C.transpose()*(C*P*C.transpose() + R).inverse();
+  x_hat_new += K * (y - C*x_hat_new);
+  P = (I - K*C)*P;
+  x_hat = x_hat_new;
+
+  t += dt;
+}
+
+// Updating EKF with linearized A and not input
 void KalmanFilter::update(const Eigen::VectorXd& y, double dt, const Eigen::MatrixXd A) {
 
   this->A = A;
   this->dt = dt;
   update(y);
+}
+
+// Updating EKF with linearized A and with input
+void KalmanFilter::update(const Eigen::VectorXd& y, double dt, const Eigen::MatrixXd A, const Eigen::VectorXd u) {
+
+  this->A = A;
+  this->dt = dt;
+  update(y, u);
 }
